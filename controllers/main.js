@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import CustomAPIError from "../errors/custom-error.js";
 import "dotenv/config";
+
 const secret = process.env.JWT_SECRET;
 
 const login = async (req, res) => {
@@ -18,11 +19,24 @@ const login = async (req, res) => {
 };
 
 const dashboard = async (req, res) => {
-  const luckyNumber = Math.floor(Math.random() * 100);
-  res.status(200).json({
-    msg: `Swagat Pranam!`,
-    secret: `Here is your authorized data, your lucky number is ${luckyNumber}`,
-  });
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new CustomAPIError("No token provided", 401);
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, secret);
+    const luckyNumber = Math.floor(Math.random() * 100);
+    res.status(200).json({
+      msg: `Swagat Pranam ${decoded.username} `,
+      secret: `Here is your authorized data, your lucky number is ${luckyNumber}`,
+    });
+  } catch (error) {
+    throw new CustomAPIError("No token provided", 401);
+  }
 };
 
 export { login, dashboard };
